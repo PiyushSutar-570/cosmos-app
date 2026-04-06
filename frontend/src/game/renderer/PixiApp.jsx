@@ -10,53 +10,55 @@ const PixiApp = () => {
   const users = useGameStore((s) => s.users);
   const myId = useGameStore((s) => s.myId);
 
-  // ✅ INIT PIXI (modern safe)
+  // ✅ INIT PIXI
   useEffect(() => {
-    const app = new Application();
+    let app;
 
-    // ✅ v8 style init (works in v7 also fallback-safe)
-    app.init({
-      resizeTo: window,
-      background: "#111111",
-    }).then(() => {
+    const initPixi = async () => {
+      app = new Application();
+      await app.init({
+        resizeTo: window,
+        background: "#111111",
+      });
+
       if (containerRef.current) {
         containerRef.current.appendChild(app.canvas);
       }
-    });
 
-    appRef.current = app;
+      appRef.current = app;
+    };
+
+    initPixi();
 
     return () => {
-      app.destroy(); // ✅ no args needed
+      app?.destroy();
     };
   }, []);
 
   // ✅ UPDATE PLAYERS
   useEffect(() => {
     const app = appRef.current;
-    if (!app) return;
+    if (!app || !app.stage) return;
 
     Object.entries(users).forEach(([id, user]) => {
       if (!playersRef.current[id]) {
         const circle = new Graphics()
           .circle(0, 0, 10)
-          .fill(id === myId ? 0x00ff00 : 0xff0000); // ✅ modern fill
+          .fill(id === myId ? 0x00ff00 : 0xff0000);
 
         app.stage.addChild(circle);
         playersRef.current[id] = circle;
       }
 
-      playersRef.current[id].position.set(user.x, user.y); // ✅ better
+      playersRef.current[id].position.set(user.x, user.y);
     });
 
-    // REMOVE USERS
+    // remove players
     Object.keys(playersRef.current).forEach((id) => {
       if (!users[id]) {
         const player = playersRef.current[id];
-
         app.stage.removeChild(player);
-        player.destroy(); // ✅ correct cleanup
-
+        player.destroy();
         delete playersRef.current[id];
       }
     });
