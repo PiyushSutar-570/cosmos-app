@@ -19,7 +19,9 @@ const PixiApp = () => {
       resizeTo: window,
       background: "#111111",
     }).then(() => {
-      containerRef.current.appendChild(app.canvas);
+      if (containerRef.current) {
+        containerRef.current.appendChild(app.canvas);
+      }
     });
 
     appRef.current = app;

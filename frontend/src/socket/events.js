@@ -8,11 +8,17 @@ export const registerSocketEvents = () => {
     addMessage(data.room, data);
   });
 
-  socket.on("proximity:join", ({ room }) => {
-    console.log("Joined proximity room:", room);
+  socket.on("proximity:join", ({ users }) => {
+    const myId = socket.id;
+    const other = users.find((id) => id !== myId);
+
+    useChatStore.getState().addRoom(other);
   });
 
-  socket.on("proximity:leave", ({ room }) => {
-    console.log("Left proximity room:", room);
+  socket.on("proximity:leave", ({ users }) => {
+    const myId = socket.id;
+    const other = users.find((id) => id !== myId);
+
+    useChatStore.getState().removeRoom(other);
   });
 };

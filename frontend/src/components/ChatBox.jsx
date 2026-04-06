@@ -9,7 +9,10 @@ const ChatBox = () => {
 
   const [input, setInput] = useState("");
 
-  const activeUserId = Object.keys(activeRooms)[0]; // simple: 1-to-1 chat
+  const activeUserIds = Object.keys(activeRooms);
+  if (activeUserIds.length === 0) return null;
+
+  const activeUserId = activeUserIds[0]; // simple: 1-to-1 chat
   if (!activeUserId) return null;
 
   const room = [myId, activeUserId].sort().join("_");
