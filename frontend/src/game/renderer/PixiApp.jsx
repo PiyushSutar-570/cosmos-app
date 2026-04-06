@@ -1,61 +1,64 @@
-import * as PIXI from "pixi.js";
+import { Application, Graphics } from "pixi.js";
 import { useEffect, useRef } from "react";
 import useGameStore from "../../store/useGameStore";
-import { renderPlayers } from "./RenderWorld";
-
 
 const PixiApp = () => {
   const containerRef = useRef(null);
-  const users = useGameStore((s) => s.users);
-  const myId = useGameStore((s) => s.myId);
-
   const appRef = useRef(null);
   const playersRef = useRef({});
 
+  const users = useGameStore((s) => s.users);
+  const myId = useGameStore((s) => s.myId);
+
+  // ✅ INIT PIXI (modern safe)
   useEffect(() => {
-    const app = new PIXI.Application({
-      width: window.innerWidth,
-      height: window.innerHeight,
-      backgroundColor: 0x111111,
+    const app = new Application();
+
+    // ✅ v8 style init (works in v7 also fallback-safe)
+    app.init({
+      resizeTo: window,
+      background: "#111111",
+    }).then(() => {
+      containerRef.current.appendChild(app.canvas);
     });
 
-    renderPlayers(app, users, myId, playersRef);
-
-    containerRef.current.appendChild(app.view);
     appRef.current = app;
 
     return () => {
-      app.destroy(true, true);
+      app.destroy(); // ✅ no args needed
     };
   }, []);
 
+  // ✅ UPDATE PLAYERS
   useEffect(() => {
     const app = appRef.current;
     if (!app) return;
 
     Object.entries(users).forEach(([id, user]) => {
       if (!playersRef.current[id]) {
-        const circle = new PIXI.Graphics();
-        circle.beginFill(id === myId ? 0x00ff00 : 0xff0000);
-        circle.drawCircle(0, 0, 10);
-        circle.endFill();
+        const circle = new Graphics()
+          .circle(0, 0, 10)
+          .fill(id === myId ? 0x00ff00 : 0xff0000); // ✅ modern fill
 
         app.stage.addChild(circle);
         playersRef.current[id] = circle;
       }
 
-      playersRef.current[id].x = user.x;
-      playersRef.current[id].y = user.y;
+      playersRef.current[id].position.set(user.x, user.y); // ✅ better
     });
 
-    // remove disconnected players
+    // REMOVE USERS
     Object.keys(playersRef.current).forEach((id) => {
       if (!users[id]) {
-        app.stage.removeChild(playersRef.current[id]);
+        const player = playersRef.current[id];
+
+        app.stage.removeChild(player);
+        player.destroy(); // ✅ correct cleanup
+
         delete playersRef.current[id];
       }
     });
-  }, [users]);
+  }, [users, myId]);
 
   return <div ref={containerRef} />;
 };
