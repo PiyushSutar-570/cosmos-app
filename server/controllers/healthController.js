@@ -1,0 +1,9 @@
+export const healthCheck = (req, res) => {
+  res.status(200).json({
+    status: "OK",
+    uptime: process.uptime(),
+    timestamp: new Date(),
+    memory: process.memoryUsage(),
+    platform: process.platform,
+  });
+};
